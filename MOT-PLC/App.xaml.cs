@@ -16,7 +16,7 @@ namespace MOT_PLC
     /// </summary>
     public partial class App : Application
     {
-        private MySqlConnection conn;
+      
 
         private void QueryOrder()
         {
@@ -25,10 +25,7 @@ namespace MOT_PLC
             // 1 需要PLC出货
             while (true)
             {
-                if (ConnectionState.Open != conn.State)
-                {
-                    conn.Open();
-                }
+
                 DataRowCollection collection = query(2);
 
                 if (collection.Count >= 1) // 有状态为2，有人来领货
@@ -59,28 +56,36 @@ namespace MOT_PLC
 
         private DataRowCollection query(int state)
         {
-            String sql = "select * from out_order where state = " + state;
-
-            MySqlDataAdapter md = new MySqlDataAdapter(sql, conn);
-
-            //MySqlCommand cmd = new MySqlCommand(sql, conn);
-            //cmd.ExecuteReader()
-
-            DataSet ds = new DataSet();
-            md.Fill(ds, "out_order");
-            return ds.Tables["out_order"].Rows;
+            
+            using(MySqlConnection conn = new MySqlConnection(Constant.myConnectionString))
+            {
+                String sql = "select * from out_order where state = " + state;
+                conn.Open();
+                using (MySqlDataAdapter md = new MySqlDataAdapter(sql, conn))
+                {
+                    DataSet ds = new DataSet();
+                    md.Fill(ds, "out_order");
+                    return ds.Tables["out_order"].Rows;
+                }
+            }
         }
 
         private Boolean update(string orderId, int state)
         {
-            String sql = String.Format("update out_order set state = {0} where out_id = '{1}'", state, orderId);
-            MySqlCommand cmd = new MySqlCommand(sql, conn);
-            return null != cmd.ExecuteScalar();
+            using (MySqlConnection conn = new MySqlConnection(Constant.myConnectionString))
+            {
+                String sql = String.Format("update out_order set state = {0} where out_id = '{1}'", state, orderId);
+                conn.Open();
+                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                {
+                    return null != cmd.ExecuteScalar();
+                }
+            }
         }
 
         private void Application_Activated(object sender, EventArgs e)
         {
-            conn = new MySqlConnection(Constant.myConnectionString);
+           
             ThreadStart childref = new ThreadStart(QueryOrder);
             Thread query = new Thread(childref);
             query.Start();
