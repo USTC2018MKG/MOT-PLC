@@ -87,7 +87,6 @@ namespace MOT_PLC.pages
             {
                 conn.Open();
                 String sql = String.Format("select * from out_order where employee_id = '{0}' and state = {1} order by out_time DESC", employeeId, 1);
-                Console.WriteLine(sql+ "\nsql+++++++++++++++++++");
                 MySqlDataAdapter md = new MySqlDataAdapter(sql, conn);
                 DataSet ds = new DataSet();
                 Console.WriteLine(ds);
